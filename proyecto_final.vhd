@@ -6,7 +6,9 @@ ENTITY proyecto_final IS
 	PORT (
 		clk : IN STD_LOGIC;
 		ps2_clk : IN STD_LOGIC;
-		ps2_data : IN STD_LOGIC);
+		ps2_data : IN STD_LOGIC;
+		leds : out std_logic_vector(6 downto 0)
+		);
 END proyecto_final;
 
 ARCHITECTURE logic OF proyecto_final IS
@@ -43,10 +45,12 @@ ARCHITECTURE logic OF proyecto_final IS
 			out_valid : OUT std_logic;
 			out_data : OUT std_logic_vector(31 DOWNTO 0));
 	END COMPONENT;
+	
 BEGIN
 	ps2_key : ps2_keyboard_to_ascii GENERIC MAP(clk_freq => 50_00_000, ps2_debounce_counter_size => 8)
 	PORT MAP(clk => clk, ps2_clk => ps2_clk, ps2_data => ps2_data, ascii_new => ascii_new, ascii_code => ascii_code);
 	random_data : rng_mt19937 GENERIC MAP(init_seed => x"9908ffff", force_const_mul => false)
 	PORT MAP(clk => clk, rst => reset, reseed => reseed, newseed => rand_data, out_ready => out_ready_rand, out_valid => out_valid_rand, out_data => rand_data);
-
+	leds <= ascii_code;
+	
 END;
