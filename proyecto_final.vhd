@@ -7,6 +7,7 @@ ENTITY proyecto_final IS
 		clk : IN STD_LOGIC;
 		ps2_clk : IN STD_LOGIC;
 		ps2_data : IN STD_LOGIC;
+		reset : in std_logic;
 		leds : out std_logic_vector(6 downto 0)
 		);
 END proyecto_final;
@@ -14,11 +15,14 @@ END proyecto_final;
 ARCHITECTURE logic OF proyecto_final IS
 	SIGNAL ascii_code : STD_LOGIC_VECTOR(6 DOWNTO 0) := (OTHERS => '0');
 	SIGNAL ascii_new : std_logic;
-	SIGNAL reset : std_logic;
 	SIGNAL reseed : std_logic;
+	signal iniciar : std_logic;
 	SIGNAL out_ready_rand : std_logic := '0';
 	SIGNAL out_valid_rand : std_logic;
 	SIGNAL rand_data : std_logic_vector(31 DOWNTO 0) := (OTHERS => '0');
+	signal letra_out : std_logic_vector(6 downto 0);
+	signal pos_letra : std_logic_vector(15 DOWNTO 0);
+	signal escribir : std_logic := '0';
 	COMPONENT ps2_keyboard_to_ascii IS
 		GENERIC (
 			clk_freq : INTEGER;
@@ -30,27 +34,41 @@ ARCHITECTURE logic OF proyecto_final IS
 			ascii_new : OUT STD_LOGIC;
 			ascii_code : OUT STD_LOGIC_VECTOR(6 DOWNTO 0));
 	END COMPONENT;
-	COMPONENT rng_mt19937 IS
-
-		GENERIC (
-			init_seed : std_logic_vector(31 DOWNTO 0);
-			force_const_mul : BOOLEAN);
-
-		PORT (
-			clk : IN std_logic;
-			rst : IN std_logic;
-			reseed : IN std_logic;
-			newseed : IN std_logic_vector(31 DOWNTO 0);
-			out_ready : IN std_logic;
-			out_valid : OUT std_logic;
-			out_data : OUT std_logic_vector(31 DOWNTO 0));
-	END COMPONENT;
-	
+	component ahorcado IS
+    PORT (
+        clk : IN STD_LOGIC;
+        letra_in : IN STD_LOGIC_VECTOR(6 DOWNTO 0);
+        reset : IN std_logic;
+		  iniciar : in std_logic;
+        letra_out : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);
+        pos_letra : OUT std_logic_vector(15 DOWNTO 0);
+        escribir : OUT STD_LOGIC);
+END component;
+function to_string ( a: std_logic_vector) return string is
+variable b : string (1 to a'length) := (others => NUL);
+variable stri : integer := 1; 
+begin
+    for i in a'range loop
+        b(stri) := std_logic'image(a((i)))(2);
+    stri := stri+1;
+    end loop;
+return b;
+end function;
 BEGIN
 	ps2_key : ps2_keyboard_to_ascii GENERIC MAP(clk_freq => 50_00_000, ps2_debounce_counter_size => 8)
 	PORT MAP(clk => clk, ps2_clk => ps2_clk, ps2_data => ps2_data, ascii_new => ascii_new, ascii_code => ascii_code);
-	random_data : rng_mt19937 GENERIC MAP(init_seed => x"9908ffff", force_const_mul => false)
-	PORT MAP(clk => clk, rst => reset, reseed => reseed, newseed => rand_data, out_ready => out_ready_rand, out_valid => out_valid_rand, out_data => rand_data);
-	leds <= ascii_code;
-	
+	juego_ahorcado : ahorcado port map(clk=>clk,letra_in=>ascii_code, reset=>reset,iniciar=>iniciar,letra_out=>letra_out,pos_letra=>pos_letra,escribir=> escribir);
+	teclado:process(ascii_new) 
+	begin	
+		if (ascii_new = '1') then
+			leds <= ascii_code;
+		end if;
+	end process;
+	escribir_p:process(letra_out,pos_letra,escribir)
+	begin
+		if (escribir = '1') then
+			report to_string(letra_out);
+			report to_string(pos_letra);
+		end if;
+	end process;
 END;
