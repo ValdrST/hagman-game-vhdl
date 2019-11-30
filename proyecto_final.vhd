@@ -69,13 +69,17 @@ BEGIN
 			leds <= letra_in;
 		end if;
 	end process;
-
+	
+	--este proceso iria en el componente del plotter
 	escribir_p:process(letra_out,pos_letra,escribir)
 	begin
 		
 		if (escribir = '1') then
 			iniciar <= '0';
-			-- aqui el plotter esta en proceso de escritura y cuando termine vuelve a estar en estado iniciar
+			-- aqui el plotter esta en proceso de escritura
+			-- escribir(letra_out,pos_letra);
+			-- esta funcion deberia ir en el plotter la cual rebie la posicion de la letra a escribir ex: 000000010000001 escribira la letra out = x en _______x______x
+			-- una vez acabado el proceso de escritura regresa a estado iniciar 1
 			-- iniciar <= '1';
 		end if;
 	end process;

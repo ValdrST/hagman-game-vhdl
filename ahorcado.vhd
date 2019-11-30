@@ -77,27 +77,28 @@ BEGIN
             END CASE;
             WHEN recibir =>
             IF iniciar = '1' THEN
+					 pos_letra <= (OTHERS => '0'); -- inicializa la matriz de posiciones para dar orden de impresion
                 FOR i IN 0 TO 16 - 1 LOOP
                     IF letra_in = pos_letra_ascii(i) THEN
                         pos_letra(i) <= '1';
                         pos_resuelta(i) <= '1';
                     END IF;
                 END LOOP;
-                pos_letra <= (OTHERS => '0'); -- inicializa la matriz de posiciones para dar orden de impresion
                 letra_out <= letra_in;
                 escribir <= '1';
                 estado_siguiente <= evaluar;
             ELSE
-                escribir <= '0';
-                letra_out <= x"00";
                 estado_siguiente <= recibir;
             END IF;
             WHEN evaluar =>
-            IF (pos_resuelta = "1111111111111111") THEN
-                estado_siguiente <= inicio;
-            ELSE
-                estado_siguiente <= recibir;
-            END IF;
+                if iniciar = '1' then
+					letra_out <= x"00";
+					IF (pos_resuelta = "1111111111111111") THEN
+						 estado_siguiente <= inicio;
+					ELSE
+						 estado_siguiente <= recibir;
+					END IF;
+				end if;
             WHEN OTHERS =>
             estado_siguiente <= estado;
         END CASE;
