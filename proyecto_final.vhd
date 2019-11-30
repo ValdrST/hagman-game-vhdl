@@ -25,6 +25,7 @@ ARCHITECTURE logic OF proyecto_final IS
 	signal pos_letra : std_logic_vector(15 DOWNTO 0);
 	signal pal_sel : std_logic_vector(2 downto 0);
 	signal escribir : std_logic := '0';
+	signal error_cont : integer;
 	COMPONENT ps2_keyboard_to_ascii IS
 		GENERIC (
 			clk_freq : INTEGER;
@@ -43,6 +44,7 @@ ARCHITECTURE logic OF proyecto_final IS
 		palabra_sel : in STD_LOGIC_VECTOR(2 downto 0);
         reset : IN std_logic;
 		iniciar : in std_logic;
+		error : OUT INTEGER;
         letra_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
         pos_letra : OUT std_logic_vector(15 DOWNTO 0);
         escribir : OUT STD_LOGIC);
@@ -60,7 +62,7 @@ end function;
 BEGIN
 	ps2_key : ps2_keyboard_to_ascii GENERIC MAP(clk_freq => 50_000_000, ps2_debounce_counter_size => 8)
 	PORT MAP(clk => clk, ps2_clk => ps2_clk, ps2_data => ps2_data, ascii_new => ascii_new, ascii_code => ascii_code);
-	juego_ahorcado : ahorcado port map(clk=>clk,letra_in=>letra_in, palabra_sel=> pal_sel,reset=>reset,iniciar=>iniciar,letra_out=>letra_out,pos_letra=>pos_letra,escribir=> escribir);
+	juego_ahorcado : ahorcado port map(clk=>clk,letra_in=>letra_in, palabra_sel=> pal_sel,reset=>reset,iniciar=>iniciar,error=>error_cont,letra_out=>letra_out,pos_letra=>pos_letra,escribir=> escribir);
 	teclado:process(ascii_new) 
 	begin	
 		if (ascii_new = '1') then

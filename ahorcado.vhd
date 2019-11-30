@@ -10,6 +10,7 @@ ENTITY ahorcado IS
         iniciar : IN std_logic; -- Esta señal sirve para saber cuando el plotter esta listo para empezar a escribir una letra
         letra_out : OUT STD_LOGIC_VECTOR(7 DOWNTO 0); -- Esta señal sirve para sacar la letra en formato ascii que se va a imprimir
         pos_letra : OUT std_logic_vector(15 DOWNTO 0); -- esta señal dice la posicion de la letra a escribir ex: 000000010000001 escribira la letra out = x en _______x______x
+        error : OUT integer := 0; --manda la cantidad de errores obtenidos
         escribir : OUT STD_LOGIC := '0'); -- esta señal de salida avisa al ploter que hay trabajo que escribir
 END ahorcado;
 
@@ -22,24 +23,20 @@ ARCHITECTURE logic OF ahorcado IS
     SIGNAL pos_resuelta : std_logic_vector(15 DOWNTO 0) := (OTHERS => '0');
     SIGNAL pos_letra_ascii : ascii_word;
     SIGNAL reseed : std_logic := '1';
-    function to_string ( a: std_logic_vector) return string is
-        variable b : string (1 to a'length) := (others => NUL);
-        variable stri : integer := 1; 
-        begin
-            for i in a'range loop
-                b(stri) := std_logic'image(a((i)))(2);
-            stri := stri+1;
-            end loop;
-        return b;
-        end function;
+
 BEGIN
     juego_p : PROCESS (estado, palabra_sel, iniciar, letra_in, pos_letra_ascii,pos_resuelta, tam_palabra)
+    variable contador_val : integer;
+    variable error_cont : integer;
     BEGIN
+        error <= error_cont;
         estado_siguiente <= estado;
         CASE(estado) IS
             WHEN inicio =>
             pos_resuelta <= (OTHERS => '1');
             pos_letra_ascii <= (OTHERS => x"00");
+            error_cont := 0;
+            
             CASE(palabra_sel) IS
                 WHEN "000" =>
                 tam_palabra <= 5;
@@ -77,15 +74,22 @@ BEGIN
             END CASE;
             WHEN recibir =>
             IF iniciar = '1' THEN
-					 pos_letra <= (OTHERS => '0'); -- inicializa la matriz de posiciones para dar orden de impresion
+                     pos_letra <= (OTHERS => '0'); -- inicializa la matriz de posiciones para dar orden de impresion
+                     contador_val := 0;
                 FOR i IN 0 TO 16 - 1 LOOP
                     IF letra_in = pos_letra_ascii(i) THEN
+                        contador_val := contador_val + 1;
                         pos_letra(i) <= '1';
+                        letra_out <= letra_in;
+                        pos_letra_ascii(i) <= x"00";
+                        escribir <= '1';
                         pos_resuelta(i) <= '1';
                     END IF;
                 END LOOP;
-                letra_out <= letra_in;
-                escribir <= '1';
+                
+                if contador_val > 0 then
+                    error_cont := error_cont + 1;
+                end if;
                 estado_siguiente <= evaluar;
             ELSE
                 estado_siguiente <= recibir;
