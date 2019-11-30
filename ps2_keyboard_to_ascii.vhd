@@ -43,7 +43,6 @@ ARCHITECTURE behavior OF ps2_keyboard_to_ascii IS
 
 BEGIN
 
-  --instantiate PS2 keyboard interface logic
   ps2_keyboard_0:  ps2_keyboard
     GENERIC MAP(clk_freq => clk_freq, debounce_counter_size => ps2_debounce_counter_size)
     PORT MAP(clk => clk, ps2_clk => ps2_clk, ps2_data => ps2_data, ps2_code_new => ps2_code_new, ps2_code => ps2_code);
@@ -54,7 +53,6 @@ BEGIN
       prev_ps2_code_new <= ps2_code_new; --keep track of previous ps2_code_new values to determine low-to-high transitions
       CASE state IS
       
-        --ready state: wait for a new PS2 code to be received
         WHEN ready =>
           IF(prev_ps2_code_new = '0' AND ps2_code_new = '1') THEN --new PS2 code received
             ascii_new <= '0';                                       --reset new ASCII code indicator
@@ -63,7 +61,6 @@ BEGIN
             state <= ready;                                         --remain in ready state
           END IF;
           
-        --new_code state: determine what to do with the new PS2 code  
         WHEN new_code =>
           IF(ps2_code = x"F0") THEN    --code indicates that next command is break
             break <= '1';                --set break flag
@@ -76,27 +73,25 @@ BEGIN
             state <= translate;          --proceed to translate state
           END IF;
 
-        --translate state: translate PS2 code to ASCII value
         WHEN translate =>
-            break <= '0';    --reset break flag
-            e0_code <= '0';  --reset multi-code command flag
-            
-            --handle codes for control, shift, and caps lock
+            break <= '0';
+            e0_code <= '0';
+
             CASE ps2_code IS
-              WHEN x"58" =>                   --caps lock code
-                IF(break = '0') THEN            --if make command
-                  caps_lock <= NOT caps_lock;     --toggle caps lock
+              WHEN x"58" =>  
+                IF(break = '0') THEN 
+                  caps_lock <= NOT caps_lock; 
                 END IF;
-              WHEN x"14" =>                   --code for the control keys
-                IF(e0_code = '1') THEN          --code for right control
-                  control_r <= NOT break;         --update right control flag
-                ELSE                            --code for left control
-                  control_l <= NOT break;         --update left control flag
+              WHEN x"14" =>   
+                IF(e0_code = '1') THEN 
+                  control_r <= NOT break; 
+                ELSE   
+                  control_l <= NOT break;
                 END IF;
-              WHEN x"12" =>                   --left shift code
-                shift_l <= NOT break;           --update left shift flag
-              WHEN x"59" =>                   --right shift code
-                shift_r <= NOT break;           --update right shift flag
+              WHEN x"12" => 
+                shift_l <= NOT break;
+              WHEN x"59" => 
+                shift_r <= NOT break;
               WHEN OTHERS => NULL;
             END CASE;
         
@@ -289,6 +284,3 @@ BEGIN
   END PROCESS;
 
 END behavior;
-
-
-
