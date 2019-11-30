@@ -17,7 +17,6 @@ ARCHITECTURE logic OF proyecto_final IS
 	SIGNAL ascii_new : std_logic;
 	SIGNAL reseed : std_logic;
 	signal iniciar : std_logic;
-	signal clk_s : std_logic;
 	SIGNAL out_ready_rand : std_logic := '0';
 	SIGNAL out_valid_rand : std_logic;
 	SIGNAL rand_data : std_logic_vector(31 DOWNTO 0) := (OTHERS => '0');
@@ -68,7 +67,6 @@ BEGIN
 			letra_in(7) <= '0';
 			letra_in(6 downto 0) <= ascii_code;
 			leds <= letra_in;
-			iniciar <= '1';
 		end if;
 	end process;
 
